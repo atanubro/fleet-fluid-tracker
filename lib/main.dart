@@ -1,6 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+// আপনার লাইভ Google Sheet CSV লিংক
+const String googleSheetCsvUrl =
+    'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/export?format=csv';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const FleetFluidApp());
 }
 
@@ -10,7 +18,7 @@ class FleetFluidApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fleet Fluid Tracker',
+      title: 'Fleet Fluid Manual',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -35,6 +43,22 @@ class FluidSpec {
     required this.interval,
     this.unit = 'Km',
   });
+
+  Map<String, dynamic> toMap() => {
+        'name': name,
+        'grade': grade,
+        'capacity': capacity,
+        'interval': interval,
+        'unit': unit,
+      };
+
+  factory FluidSpec.fromMap(Map<String, dynamic> map) => FluidSpec(
+        name: map['name'] ?? '',
+        grade: map['grade'] ?? '',
+        capacity: (map['capacity'] as num?)?.toDouble() ?? 0.0,
+        interval: (map['interval'] as num?)?.toInt() ?? 0,
+        unit: map['unit'] ?? 'Km',
+      );
 }
 
 class VehicleEquipment {
@@ -49,6 +73,23 @@ class VehicleEquipment {
     required this.fuelTankCapacity,
     required this.fluids,
   });
+
+  Map<String, dynamic> toMap() => {
+        'make': make,
+        'model': model,
+        'fuelTankCapacity': fuelTankCapacity,
+        'fluids': fluids.map((f) => f.toMap()).toList(),
+      };
+
+  factory VehicleEquipment.fromMap(Map<String, dynamic> map) => VehicleEquipment(
+        make: map['make'] ?? '',
+        model: map['model'] ?? '',
+        fuelTankCapacity: (map['fuelTankCapacity'] as num?)?.toDouble() ?? 0.0,
+        fluids: (map['fluids'] as List<dynamic>?)
+                ?.map((item) => FluidSpec.fromMap(item as Map<String, dynamic>))
+                .toList() ??
+            [],
+      );
 }
 
 class FleetHomeScreen extends StatefulWidget {
@@ -59,7 +100,8 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  final List<VehicleEquipment> _fleetList = [
+  // অফলাইন ডিফল্ট ডেটা (ইনস্টল করলেই সাথে সাথে পাওয়া যাবে)
+  final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Tata',
       model: '1212TC',
@@ -82,15 +124,122 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
         FluidSpec(name: 'Coolant', grade: 'Heavy Duty LLC', capacity: 20.0, interval: 2000, unit: 'Hrs'),
       ],
     ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BD-50 Dozer',
+      fuelTankCapacity: 320.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 22.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'Hydraulic 68', capacity: 95.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'SAE 30', capacity: 48.0, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
   ];
 
+  List<VehicleEquipment> _fleetList = [];
   List<VehicleEquipment> _filteredFleet = [];
   final TextEditingController _searchCtrl = TextEditingController();
+  bool _isSyncing = false;
 
   @override
   void initState() {
     super.initState();
-    _filteredFleet = _fleetList;
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final localJson = prefs.getString('saved_fleet_data');
+    if (localJson != null && localJson.isNotEmpty) {
+      try {
+        final List<dynamic> decoded = jsonDecode(localJson);
+        _fleetList = decoded.map((e) => VehicleEquipment.fromMap(e)).toList();
+      } catch (_) {
+        _fleetList = List.from(_defaultPreloadedData);
+      }
+    } else {
+      _fleetList = List.from(_defaultPreloadedData);
+    }
+    setState(() {
+      _filteredFleet = _fleetList;
+    });
+  }
+
+  Future<void> _saveDataLocally() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = jsonEncode(_fleetList.map((e) => e.toMap()).toList());
+    await prefs.setString('saved_fleet_data', jsonStr);
+  }
+
+  // গুগল শিট থেকে লাইভ সিঙ্ক করার মেথড
+  Future<void> _syncFromGoogleSheet() async {
+    setState(() => _isSyncing = true);
+    try {
+      final res = await http.get(Uri.parse(googleSheetCsvUrl));
+      if (res.statusCode == 200) {
+        final lines = const LineSplitter().convert(res.body);
+        if (lines.length > 1) {
+          Map<String, VehicleEquipment> vehicleMap = {};
+
+          for (int i = 1; i < lines.length; i++) {
+            final line = lines[i].trim();
+            if (line.isEmpty) continue;
+            final cols = line.split(',').map((c) => c.trim()).toList();
+            if (cols.length >= 7) {
+              final make = cols[0];
+              final model = cols[1];
+              final fuel = double.tryParse(cols[2]) ?? 0.0;
+              final fluidName = cols[3];
+              final grade = cols[4];
+              final cap = double.tryParse(cols[5]) ?? 0.0;
+              final interval = int.tryParse(cols[6]) ?? 0;
+              final unit = cols.length > 7 ? cols[7] : 'Km';
+
+              final key = '$make-$model'.toLowerCase();
+              if (!vehicleMap.containsKey(key)) {
+                vehicleMap[key] = VehicleEquipment(
+                  make: make,
+                  model: model,
+                  fuelTankCapacity: fuel,
+                  fluids: [],
+                );
+              }
+
+              vehicleMap[key]!.fluids.add(
+                    FluidSpec(name: fluidName, grade: grade, capacity: cap, interval: interval, unit: unit),
+                  );
+            }
+          }
+
+          if (vehicleMap.isNotEmpty) {
+            _fleetList = vehicleMap.values.toList();
+            await _saveDataLocally();
+            _filterSearch(_searchCtrl.text);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Sync successful! ${_fleetList.length} vehicles updated from Sheet.'),
+                  backgroundColor: Colors.green.shade700,
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        throw Exception('Server error: ${res.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sync failed: Make sure Google Sheet is set to "Anyone with the link".'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
   }
 
   void _filterSearch(String query) {
@@ -136,21 +285,13 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                 TextField(
                   controller: currentOdoCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Current Meter Reading',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  decoration: const InputDecoration(labelText: 'Current Reading', border: OutlineInputBorder(), isDense: true),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: lastChangeCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Service Meter Reading',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                  decoration: const InputDecoration(labelText: 'Last Service Reading', border: OutlineInputBorder(), isDense: true),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
@@ -160,15 +301,12 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                     final curr = double.tryParse(currentOdoCtrl.text.trim()) ?? 0;
                     final last = double.tryParse(lastChangeCtrl.text.trim()) ?? 0;
                     final run = curr - last;
-
                     if (run < 0) {
-                      setCalcState(() => calcResult = 'Error: Current reading must be greater than last service.');
+                      setCalcState(() => calcResult = 'Error: Current reading must be greater.');
                       return;
                     }
-
                     final buf = StringBuffer();
                     buf.writeln('Total run: ${run.toStringAsFixed(0)}\n');
-
                     for (var f in v.fluids) {
                       if (f.interval > 0) {
                         final remaining = f.interval - run;
@@ -188,200 +326,15 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                   Container(
                     width: double.maxFinite,
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
                     child: Text(calcResult, style: const TextStyle(fontSize: 12, height: 1.4)),
                   ),
                 ]
               ],
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
-          ],
+          actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close'))],
         ),
-      ),
-    );
-  }
-
-  void _showVehicleDialog({VehicleEquipment? existingVehicle}) {
-    final isEdit = existingVehicle != null;
-    final makeCtrl = TextEditingController(text: isEdit ? existingVehicle.make : '');
-    final modelCtrl = TextEditingController(text: isEdit ? existingVehicle.model : '');
-    final fuelCtrl = TextEditingController(text: isEdit ? existingVehicle.fuelTankCapacity.toString() : '');
-
-    List<FluidSpec> tempFluids = isEdit
-        ? existingVehicle.fluids
-            .map((f) => FluidSpec(
-                  name: f.name,
-                  grade: f.grade,
-                  capacity: f.capacity,
-                  interval: f.interval,
-                  unit: f.unit,
-                ))
-            .toList()
-        : [
-            FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 0.0, interval: 0, unit: 'Km'),
-            FluidSpec(name: 'Gear Oil', grade: '80W90', capacity: 0.0, interval: 0, unit: 'Km'),
-          ];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(isEdit ? 'Edit Vehicle / Equipment' : 'Add Vehicle / Equipment'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(controller: makeCtrl, decoration: const InputDecoration(labelText: 'Make (e.g. Tata, JCB)')),
-                  TextField(controller: modelCtrl, decoration: const InputDecoration(labelText: 'Model (e.g. 1212TC, 205)')),
-                  TextField(controller: fuelCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Fuel Tank Capacity (L)')),
-                  const Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Fluids / Oils List', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle, color: Colors.indigo),
-                        tooltip: 'Add Fluid',
-                        onPressed: () {
-                          setDialogState(() {
-                            tempFluids.add(FluidSpec(name: 'Coolant', grade: '', capacity: 0.0, interval: 0, unit: 'Km'));
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  ...List.generate(tempFluids.length, (i) {
-                    final f = tempFluids[i];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: f.name,
-                                  decoration: const InputDecoration(labelText: 'Fluid Name', isDense: true),
-                                  onChanged: (val) => f.name = val.trim(),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 18, color: Colors.red),
-                                onPressed: () => setDialogState(() => tempFluids.removeAt(i)),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: TextFormField(
-                                  initialValue: f.grade,
-                                  decoration: const InputDecoration(labelText: 'Grade', isDense: true),
-                                  onChanged: (val) => f.grade = val.trim(),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                flex: 1,
-                                child: TextFormField(
-                                  initialValue: f.capacity == 0 ? '' : f.capacity.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Qty(L)', isDense: true),
-                                  onChanged: (val) => f.capacity = double.tryParse(val.trim()) ?? 0.0,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                flex: 2,
-                                child: TextFormField(
-                                  initialValue: f.interval == 0 ? '' : f.interval.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(labelText: 'Int(${f.unit})', isDense: true),
-                                  onChanged: (val) => f.interval = int.tryParse(val.trim()) ?? 0,
-                                ),
-                              ),
-                              DropdownButton<String>(
-                                value: f.unit,
-                                items: const [
-                                  DropdownMenuItem(value: 'Km', child: Text('Km')),
-                                  DropdownMenuItem(value: 'Hrs', child: Text('Hrs')),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setDialogState(() => f.unit = val);
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: () {
-                if (makeCtrl.text.isNotEmpty && modelCtrl.text.isNotEmpty) {
-                  final newVehicle = VehicleEquipment(
-                    make: makeCtrl.text.trim(),
-                    model: modelCtrl.text.trim(),
-                    fuelTankCapacity: double.tryParse(fuelCtrl.text.trim()) ?? 0.0,
-                    fluids: tempFluids,
-                  );
-
-                  setState(() {
-                    if (isEdit) {
-                      final idx = _fleetList.indexOf(existingVehicle);
-                      if (idx != -1) _fleetList[idx] = newVehicle;
-                    } else {
-                      _fleetList.add(newVehicle);
-                    }
-                    _filterSearch(_searchCtrl.text);
-                  });
-                  Navigator.of(ctx).pop();
-                }
-              },
-              child: Text(isEdit ? 'Update Vehicle' : 'Save Vehicle'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _confirmDelete(VehicleEquipment v) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: Text('Are you sure you want to delete ${v.make} ${v.model}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade100),
-            onPressed: () {
-              setState(() {
-                _fleetList.remove(v);
-                _filterSearch(_searchCtrl.text);
-              });
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }
@@ -420,9 +373,21 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vehicle Fleet Specifications'),
+        title: const Text('Fleet Fluid Manual'),
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          _isSyncing
+              ? const Padding(
+                  padding: EdgeInsets.all(14.0),
+                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.sync),
+                  tooltip: 'Sync with Google Sheet',
+                  onPressed: _syncFromGoogleSheet,
+                ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -457,27 +422,36 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Text('${v.make} ${v.model}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                      decoration: BoxDecoration(color: Colors.amber.shade200, borderRadius: BorderRadius.circular(6)),
-                                      child: Text('Fuel: ${v.fuelTankCapacity}L', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.brown.shade900)),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${v.make} ${v.model}',
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.shade200,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              'Fuel Tank: ${v.fuelTankCapacity}L',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 11,
+                                                color: Colors.brown.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.speed, size: 20, color: Colors.teal),
-                                      tooltip: 'Maintenance Calculator',
+                                      icon: const Icon(Icons.speed, size: 22, color: Colors.teal),
+                                      tooltip: 'Calculator',
                                       onPressed: () => _showServiceCalculator(v),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, size: 18, color: Colors.indigo),
-                                      tooltip: 'Edit',
-                                      onPressed: () => _showVehicleDialog(existingVehicle: v),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                      tooltip: 'Delete',
-                                      onPressed: () => _confirmDelete(v),
                                     ),
                                   ],
                                 ),
@@ -492,11 +466,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showVehicleDialog(),
-        tooltip: 'Add Vehicle',
-        child: const Icon(Icons.add),
       ),
     );
   }
