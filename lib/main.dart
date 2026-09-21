@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// আপনার লাইভ Google Sheet CSV লিংক
+// এটি সরাসরি রিডাইরেক্ট ছাড়াই শিট থেকে CSV ডেটা দেয়
 const String googleSheetCsvUrl =
-    'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/export?format=csv';
+    'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/gviz/tq?tqx=out:csv';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
