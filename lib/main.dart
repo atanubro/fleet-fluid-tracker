@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// আপনার লাইভ Google Sheet CSV এক্সপোর্ট লিংক
+// লাইভ Google Sheet CSV এক্সপোর্ট লিংক
 const String googleSheetCsvUrl =
     'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/gviz/tq?tqx=out:csv';
 
@@ -18,7 +18,7 @@ class FleetFluidApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fleet Fluid Manual',
+      title: 'Lubrication Chart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -100,7 +100,7 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  // অফলাইন ডিফল্ট ডেটা (অ্যাপ ইন্সটল করলে ইন্টারনেটের অনুপস্থিতিতেও এই গাড়িগুলো পাওয়া যাবে)
+  // অফলাইন ডিফল্ট ডেটা (ইন্টারনেট ছাড়াও অ্যাপে প্রদর্শিত হবে)
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Tata',
@@ -171,7 +171,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     await prefs.setString('saved_fleet_data_v2', jsonStr);
   }
 
-  // কোটেশন বা অতিরিক্ত স্পেস ফিল্টার করার ফাংশন
+  // CSV ফিল্ডের কোটেশন ও অতিরিক্ত স্পেস অপসারণ
   String _cleanCol(String text) {
     var val = text.trim();
     if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
@@ -180,7 +180,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     return val.replaceAll('""', '"').trim();
   }
 
-  // স্মার্ট মার্জিং: Google Sheet থেকে ডেটা এনে বিদ্যমান তালিকার সাথে যুক্ত করা
+  // Google Sheet থেকে লাইভ ডেটা সিঙ্ক ও মার্জ
   Future<void> _syncFromGoogleSheet() async {
     setState(() => _isSyncing = true);
     try {
@@ -188,7 +188,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
       if (res.statusCode == 200) {
         final lines = const LineSplitter().convert(res.body);
         if (lines.length > 1) {
-          // ১. বিদ্যমান সমস্ত গাড়ি এবং ডিফল্ট গাড়িগুলো ম্যাপে রাখা (যাতে কোনো ডেটা হারিয়ে না যায়)
           Map<String, VehicleEquipment> vehicleMap = {};
 
           for (var v in _defaultPreloadedData) {
@@ -201,7 +200,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
             vehicleMap[key] = v;
           }
 
-          // ২. গুগল শিটের সারিগুলো প্রসেস করা
           for (int i = 1; i < lines.length; i++) {
             final line = lines[i].trim();
             if (line.isEmpty) continue;
@@ -415,7 +413,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fleet Fluid Manual'),
+        title: const Text('Lubrication Chart'),
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
