@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// লাইভ Google Sheet CSV এক্সপোর্ট লিংক
+// আপনার লাইভ Google Sheet CSV এক্সপোর্ট লিংক
 const String googleSheetCsvUrl =
     'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/gviz/tq?tqx=out:csv';
 
@@ -100,7 +100,7 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  // অফলাইন ডিফল্ট ডেটা (ইন্টারনেট ছাড়াও অ্যাপে প্রদর্শিত হবে)
+  // অফলাইন ডিফল্ট ডেটা (ইন্টারনেট না থাকলেও অ্যাপে থাকবে)
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Tata',
@@ -149,7 +149,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    final localJson = prefs.getString('saved_fleet_data_v2');
+    final localJson = prefs.getString('saved_fleet_data_v3');
     if (localJson != null && localJson.isNotEmpty) {
       try {
         final List<dynamic> decoded = jsonDecode(localJson);
@@ -168,10 +168,10 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Future<void> _saveDataLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = jsonEncode(_fleetList.map((e) => e.toMap()).toList());
-    await prefs.setString('saved_fleet_data_v2', jsonStr);
+    await prefs.setString('saved_fleet_data_v3', jsonStr);
   }
 
-  // CSV ফিল্ডের কোটেশন ও অতিরিক্ত স্পেস অপসারণ
+  // কোটেশন বা অতিরিক্ত স্পেস ফিল্টার করার হেল্পার
   String _cleanCol(String text) {
     var val = text.trim();
     if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
@@ -180,7 +180,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     return val.replaceAll('""', '"').trim();
   }
 
-  // Google Sheet থেকে লাইভ ডেটা সিঙ্ক ও মার্জ
+  // Google Sheet থেকে ডেটা এনে বিদ্যমান তালিকার সাথে স্মার্ট মার্জ
   Future<void> _syncFromGoogleSheet() async {
     setState(() => _isSyncing = true);
     try {
@@ -272,7 +272,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sync failed: Check internet connection or sheet format.'),
+            content: Text('Sync failed: Check internet connection or sheet columns.'),
             backgroundColor: Colors.red,
           ),
         );
