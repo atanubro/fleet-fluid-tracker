@@ -100,7 +100,6 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  // অফলাইন ডিফল্ট ডেটা (ইন্টারনেট না থাকলেও অ্যাপে থাকবে)
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Tata',
@@ -171,7 +170,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     await prefs.setString('saved_fleet_data_v3', jsonStr);
   }
 
-  // কোটেশন বা অতিরিক্ত স্পেস ফিল্টার করার হেল্পার
   String _cleanCol(String text) {
     var val = text.trim();
     if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
@@ -180,7 +178,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     return val.replaceAll('""', '"').trim();
   }
 
-  // Google Sheet থেকে ডেটা এনে বিদ্যমান তালিকার সাথে স্মার্ট মার্জ
   Future<void> _syncFromGoogleSheet() async {
     setState(() => _isSyncing = true);
     try {
@@ -303,6 +300,204 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     if (lower.contains('brake')) return Colors.purple.shade800;
     if (lower.contains('def') || lower.contains('adblue')) return Colors.cyan.shade800;
     return Colors.indigo.shade800;
+  }
+
+  // নতুন Equipment যোগ করার ডায়ালগ (+ বোতামের জন্য)
+  void _showAddVehicleDialog() {
+    final makeCtrl = TextEditingController();
+    final modelCtrl = TextEditingController();
+    final fuelCtrl = TextEditingController();
+
+    List<Map<String, dynamic>> tempFluids = [
+      {'name': TextEditingController(text: 'Engine Oil'), 'grade': TextEditingController(text: '15W40'), 'cap': TextEditingController(), 'int': TextEditingController(), 'unit': 'Km'},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          title: const Text('Add New Equipment', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: makeCtrl,
+                          decoration: const InputDecoration(labelText: 'Make (e.g. CAT, JCB)', border: OutlineInputBorder(), isDense: true),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: modelCtrl,
+                          decoration: const InputDecoration(labelText: 'Model (e.g. 3DX)', border: OutlineInputBorder(), isDense: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: fuelCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Fuel Tank Capacity (L)', border: OutlineInputBorder(), isDense: true),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Fluids & Capacities:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Add Fluid'),
+                        onPressed: () {
+                          setDlgState(() {
+                            tempFluids.add({
+                              'name': TextEditingController(),
+                              'grade': TextEditingController(),
+                              'cap': TextEditingController(),
+                              'int': TextEditingController(),
+                              'unit': 'Km',
+                            });
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  ...tempFluids.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final item = entry.value;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: item['name'],
+                                  decoration: const InputDecoration(hintText: 'Fluid Name', isDense: true),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: item['grade'],
+                                  decoration: const InputDecoration(hintText: 'Grade', isDense: true),
+                                ),
+                              ),
+                              if (tempFluids.length > 1)
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                                  onPressed: () => setDlgState(() => tempFluids.removeAt(idx)),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: item['cap'],
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(hintText: 'Cap (L)', isDense: true),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: TextField(
+                                  controller: item['int'],
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(hintText: 'Interval', isDense: true),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              DropdownButton<String>(
+                                value: item['unit'],
+                                underline: const SizedBox(),
+                                items: const [
+                                  DropdownMenuItem(value: 'Km', child: Text('Km')),
+                                  DropdownMenuItem(value: 'Hrs', child: Text('Hrs')),
+                                ],
+                                onChanged: (v) => setDlgState(() => item['unit'] = v ?? 'Km'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                final make = makeCtrl.text.trim();
+                final model = modelCtrl.text.trim();
+                final fuel = double.tryParse(fuelCtrl.text.trim()) ?? 0.0;
+
+                if (make.isEmpty || model.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter Make and Model')),
+                  );
+                  return;
+                }
+
+                List<FluidSpec> fluids = [];
+                for (var tf in tempFluids) {
+                  final fName = (tf['name'] as TextEditingController).text.trim();
+                  if (fName.isNotEmpty) {
+                    fluids.add(
+                      FluidSpec(
+                        name: fName,
+                        grade: (tf['grade'] as TextEditingController).text.trim(),
+                        capacity: double.tryParse((tf['cap'] as TextEditingController).text.trim()) ?? 0.0,
+                        interval: int.tryParse((tf['int'] as TextEditingController).text.trim()) ?? 0,
+                        unit: tf['unit'],
+                      ),
+                    );
+                  }
+                }
+
+                setState(() {
+                  _fleetList.insert(
+                    0,
+                    VehicleEquipment(make: make, model: model, fuelTankCapacity: fuel, fluids: fluids),
+                  );
+                  _filteredFleet = _fleetList;
+                });
+                _saveDataLocally();
+                Navigator.of(ctx).pop();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$make $model added successfully!'),
+                    backgroundColor: Colors.green.shade700,
+                  ),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showServiceCalculator(VehicleEquipment v) {
@@ -506,6 +701,12 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
             ),
           ],
         ),
+      ),
+      // নিচে ডানপাশের '+' বোতাম
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddVehicleDialog,
+        tooltip: 'Add Equipment',
+        child: const Icon(Icons.add),
       ),
     );
   }
