@@ -31,7 +31,27 @@ jobs:
         run: |
           sed -i '/<application/i <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
 
-      # ফিক্সড সাইনিং কি তৈরি করা (যাতে প্রতিবার একই সিগনেচার দিয়ে APK সাইন হয়)
+      # অ্যাপের ডিসপ্লে নাম পরিবর্তন করে "Lubrication Chart" করা
+      - name: Set App Name to Lubrication Chart
+        run: |
+          sed -i 's/android:label="fleet_fluid_tracker"/android:label="Lubrication Chart"/' android/app/src/main/AndroidManifest.xml
+
+      # আপলোড করা ছবিটিকে অ্যাপ আইকন হিসেবে বসানো
+      - name: Configure App Icon
+        run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          # আপলোড করা ছবি খোঁজা (png বা jpg)
+          ICON_SRC=$(find . -maxdepth 1 -name "app_icon.*" | head -n 1)
+          if [ -n "$ICON_SRC" ]; then
+            echo "Found icon: $ICON_SRC, generating launcher icons..."
+            for res_dir in android/app/src/main/res/mipmap-*; do
+              convert "$ICON_SRC" -resize 192x192 "$res_dir/ic_launcher.png"
+            done
+          else
+            echo "No app_icon found in root directory!"
+          fi
+
+      # ফিক্সড সাইনিং কি তৈরি করা
       - name: Create Fixed Keystore
         run: |
           keytool -genkey -v -keystore android/app/fixed-key.jks -storepass fleetpass123 -alias fleetkey -keypass fleetpass123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=FleetTracker, OU=Fleet, O=BRO, L=Hooghly, S=WB, C=IN"
@@ -87,5 +107,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Fleet-Fluid-Tracker-APK
+          name: Lubrication-Chart-APK
           path: build/app/outputs/flutter-apk/app-release.apk
