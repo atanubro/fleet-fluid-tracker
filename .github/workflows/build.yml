@@ -31,6 +31,56 @@ jobs:
         run: |
           sed -i '/<application/i <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
 
+      # ফিক্সড সাইনিং কি তৈরি করা (যাতে প্রতিবার একই সিগনেচার দিয়ে APK সাইন হয়)
+      - name: Create Fixed Keystore
+        run: |
+          keytool -genkey -v -keystore android/app/fixed-key.jks -storepass fleetpass123 -alias fleetkey -keypass fleetpass123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=FleetTracker, OU=Fleet, O=BRO, L=Hooghly, S=WB, C=IN"
+          
+          cat <<EOF > android/key.properties
+          storePassword=fleetpass123
+          keyPassword=fleetpass123
+          keyAlias=fleetkey
+          storeFile=fixed-key.jks
+          EOF
+
+      # Gradle কনফিগারেশনে রিলিজ সাইনিং যুক্ত করা
+      - name: Configure Gradle Signing
+        run: |
+          cat << 'EOF' > update_gradle.py
+          with open("android/app/build.gradle", "r") as f:
+              content = f.read()
+
+          keystore_config = """
+          def keystoreProperties = new Properties()
+          def keystorePropertiesFile = rootProject.file('key.properties')
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+          }
+          """
+
+          signing_block = """
+              signingConfigs {
+                  release {
+                      keyAlias = keystoreProperties['keyAlias']
+                      keyPassword = keystoreProperties['keyPassword']
+                      storeFile = file(keystoreProperties['storeFile'])
+                      storePassword = keystoreProperties['storePassword']
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig = signingConfigs.release
+                  }
+              }
+          """
+
+          content = keystore_config + content
+          content = content.replace("buildTypes {", signing_block + "\n    buildTypes_old {")
+          with open("android/app/build.gradle", "w") as f:
+              f.write(content)
+          EOF
+          python3 update_gradle.py
+
       - name: Build APK
         run: flutter build apk --release
 
