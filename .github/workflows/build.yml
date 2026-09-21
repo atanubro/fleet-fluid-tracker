@@ -44,38 +44,20 @@ jobs:
             done
           fi
 
-      # ফিক্সড কীস্টোর তৈরি
-      - name: Generate Constant Keystore
-        run: |
-          keytool -genkey -v -keystore android/app/fixed_keystore.jks -storepass secretKey123 -alias appKey -keypass secretKey123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LubricationChart, OU=Fleet, O=BRO, L=Pithoragarh, S=UK, C=IN"
-
-      # গ্র্যাডলে সরাসরি ফিক্সড সাইনিং যুক্ত করা
-      - name: Link Keystore to Gradle
-        run: |
-          cat << 'EOF' >> android/app/build.gradle
-
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file('fixed_keystore.jks')
-                      storePassword 'secretKey123'
-                      keyAlias 'appKey'
-                      keyPassword 'secretKey123'
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-          EOF
-
-      - name: Build APK
+      - name: Build Base APK
         run: flutter build apk --release
+
+      # ফিক্সড সার্টিফিকেট দিয়ে APK স্থায়ীভাবে সাইন করা (গ্র্যাডল স্পর্শ না করে)
+      - name: Sign APK with Constant Certificate
+        run: |
+          keytool -genkey -v -keystore constant.jks -storepass brokey123 -alias brofleet -keypass brokey123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LubricationChart, OU=Fleet, O=BRO, C=IN"
+          
+          # Android SDK-র apksigner দিয়ে সাইন করা
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
+          $APKSIGNER sign --ks constant.jks --ks-pass pass:brokey123 --ks-key-alias brofleet --key-pass pass:brokey123 --out Lubrication-Chart.apk build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Lubrication-Chart-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: Lubrication-Chart.apk
