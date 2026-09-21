@@ -35,14 +35,14 @@ jobs:
         run: |
           sed -i '/<application/i <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
 
-      - name: Generate App Launcher Icons
+      # সরাসরি আপনার আপলোড করা app_icon.jpg থেকে অ্যান্ড্রয়েড আইকন তৈরি
+      - name: Setup App Icon
         run: |
-          ICON_FILE=$(find . -maxdepth 1 -name "app_icon.*" | head -n 1)
-          if [ -n "$ICON_FILE" ]; then
-            echo "Icon found: $ICON_FILE"
-            cp "$ICON_FILE" app_icon.png
-            flutter pub get
-            dart run flutter_launcher_icons
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          if [ -f "app_icon.jpg" ]; then
+            for dir in android/app/src/main/res/mipmap-*; do
+              convert app_icon.jpg -resize 192x192 "$dir/ic_launcher.png"
+            done
           fi
 
       - name: Build APK
