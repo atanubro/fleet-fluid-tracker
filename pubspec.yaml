@@ -1,7 +1,7 @@
 name: fleet_fluid_tracker
-description: Lubrication Chart & Fleet Fluid Tracker App
+description: Lubrication Chart App
 publish_to: 'none'
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -16,12 +16,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.13.1
-
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: "app_icon.png"
 
 flutter:
   uses-material-design: true
