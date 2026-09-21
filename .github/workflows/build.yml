@@ -27,79 +27,23 @@ jobs:
       - name: Create Flutter Android skeleton
         run: flutter create . --platforms=android --project-name=fleet_fluid_tracker
 
-      - name: Add Internet Permission to AndroidManifest
-        run: |
-          sed -i '/<application/i <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
-
-      # অ্যাপের ডিসপ্লে নাম পরিবর্তন করে "Lubrication Chart" করা
       - name: Set App Name to Lubrication Chart
         run: |
           sed -i 's/android:label="fleet_fluid_tracker"/android:label="Lubrication Chart"/' android/app/src/main/AndroidManifest.xml
 
-      # আপলোড করা ছবিটিকে অ্যাপ আইকন হিসেবে বসানো
-      - name: Configure App Icon
+      - name: Add Internet Permission
         run: |
-          sudo apt-get update && sudo apt-get install -y imagemagick
-          # আপলোড করা ছবি খোঁজা (png বা jpg)
-          ICON_SRC=$(find . -maxdepth 1 -name "app_icon.*" | head -n 1)
-          if [ -n "$ICON_SRC" ]; then
-            echo "Found icon: $ICON_SRC, generating launcher icons..."
-            for res_dir in android/app/src/main/res/mipmap-*; do
-              convert "$ICON_SRC" -resize 192x192 "$res_dir/ic_launcher.png"
-            done
-          else
-            echo "No app_icon found in root directory!"
+          sed -i '/<application/i <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
+
+      - name: Generate App Launcher Icons
+        run: |
+          ICON_FILE=$(find . -maxdepth 1 -name "app_icon.*" | head -n 1)
+          if [ -n "$ICON_FILE" ]; then
+            echo "Icon found: $ICON_FILE"
+            cp "$ICON_FILE" app_icon.png
+            flutter pub get
+            dart run flutter_launcher_icons
           fi
-
-      # ফিক্সড সাইনিং কি তৈরি করা
-      - name: Create Fixed Keystore
-        run: |
-          keytool -genkey -v -keystore android/app/fixed-key.jks -storepass fleetpass123 -alias fleetkey -keypass fleetpass123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=FleetTracker, OU=Fleet, O=BRO, L=Hooghly, S=WB, C=IN"
-          
-          cat <<EOF > android/key.properties
-          storePassword=fleetpass123
-          keyPassword=fleetpass123
-          keyAlias=fleetkey
-          storeFile=fixed-key.jks
-          EOF
-
-      # Gradle কনফিগারেশনে রিলিজ সাইনিং যুক্ত করা
-      - name: Configure Gradle Signing
-        run: |
-          cat << 'EOF' > update_gradle.py
-          with open("android/app/build.gradle", "r") as f:
-              content = f.read()
-
-          keystore_config = """
-          def keystoreProperties = new Properties()
-          def keystorePropertiesFile = rootProject.file('key.properties')
-          if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-          }
-          """
-
-          signing_block = """
-              signingConfigs {
-                  release {
-                      keyAlias = keystoreProperties['keyAlias']
-                      keyPassword = keystoreProperties['keyPassword']
-                      storeFile = file(keystoreProperties['storeFile'])
-                      storePassword = keystoreProperties['storePassword']
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig = signingConfigs.release
-                  }
-              }
-          """
-
-          content = keystore_config + content
-          content = content.replace("buildTypes {", signing_block + "\n    buildTypes_old {")
-          with open("android/app/build.gradle", "w") as f:
-              f.write(content)
-          EOF
-          python3 update_gradle.py
 
       - name: Build APK
         run: flutter build apk --release
