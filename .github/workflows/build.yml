@@ -44,35 +44,32 @@ jobs:
             done
           fi
 
-      # ফিক্সড সাইনিং কি ও কনফিগারেশন সেটআপ (যাতে প্রতি বিল্ডে একই সার্টিফিকেট বজায় থাকে)
-      - name: Setup Fixed Release Signing
+      # ফিক্সড কীস্টোর তৈরি
+      - name: Generate Constant Keystore
         run: |
-          keytool -genkey -v -keystore android/app/upload-keystore.jks -storepass secret123 -alias upload -keypass secret123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=BROFleet, OU=Fleet, O=BRO, L=Pithoragarh, S=UK, C=IN"
-          
-          cat << 'EOF' > update_signing.py
-          with open('android/app/build.gradle', 'r') as f:
-              gradle = f.read()
+          keytool -genkey -v -keystore android/app/fixed_keystore.jks -storepass secretKey123 -alias appKey -keypass secretKey123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LubricationChart, OU=Fleet, O=BRO, L=Pithoragarh, S=UK, C=IN"
 
-          signing_def = """
+      # গ্র্যাডলে সরাসরি ফিক্সড সাইনিং যুক্ত করা
+      - name: Link Keystore to Gradle
+        run: |
+          cat << 'EOF' >> android/app/build.gradle
+
+          android {
               signingConfigs {
                   release {
-                      storeFile file('upload-keystore.jks')
-                      storePassword 'secret123'
-                      keyAlias 'upload'
-                      keyPassword 'secret123'
+                      storeFile file('fixed_keystore.jks')
+                      storePassword 'secretKey123'
+                      keyAlias 'appKey'
+                      keyPassword 'secretKey123'
                   }
               }
-          """
-          
-          # Inject signingConfigs before buildTypes
-          gradle = gradle.replace('buildTypes {', signing_def + '\n    buildTypes {')
-          # Point release buildType to signingConfigs.release
-          gradle = gradle.replace('buildTypes {\n        release {', 'buildTypes {\n        release {\n            signingConfig = signingConfigs.release')
-          
-          with open('android/app/build.gradle', 'w') as f:
-              f.write(gradle)
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
           EOF
-          python3 update_signing.py
 
       - name: Build APK
         run: flutter build apk --release
