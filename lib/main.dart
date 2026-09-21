@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// এটি সরাসরি রিডাইরেক্ট ছাড়াই শিট থেকে CSV ডেটা দেয়
+// আপনার লাইভ Google Sheet CSV এক্সপোর্ট লিংক
 const String googleSheetCsvUrl =
     'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/gviz/tq?tqx=out:csv';
 
@@ -100,7 +100,7 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  // অফলাইন ডিফল্ট ডেটা (ইনস্টল করলেই সাথে সাথে পাওয়া যাবে)
+  // অফলাইন ডিফল্ট ডেটা (অ্যাপ ইন্সটল করলে ইন্টারনেটের অনুপস্থিতিতেও এই গাড়িগুলো পাওয়া যাবে)
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Tata',
@@ -149,7 +149,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    final localJson = prefs.getString('saved_fleet_data');
+    final localJson = prefs.getString('saved_fleet_data_v2');
     if (localJson != null && localJson.isNotEmpty) {
       try {
         final List<dynamic> decoded = jsonDecode(localJson);
@@ -168,10 +168,19 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Future<void> _saveDataLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = jsonEncode(_fleetList.map((e) => e.toMap()).toList());
-    await prefs.setString('saved_fleet_data', jsonStr);
+    await prefs.setString('saved_fleet_data_v2', jsonStr);
   }
 
-  // গুগল শিট থেকে লাইভ সিঙ্ক করার মেথড
+  // কোটেশন বা অতিরিক্ত স্পেস ফিল্টার করার ফাংশন
+  String _cleanCol(String text) {
+    var val = text.trim();
+    if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+      val = val.substring(1, val.length - 1);
+    }
+    return val.replaceAll('""', '"').trim();
+  }
+
+  // স্মার্ট মার্জিং: Google Sheet থেকে ডেটা এনে বিদ্যমান তালিকার সাথে যুক্ত করা
   Future<void> _syncFromGoogleSheet() async {
     setState(() => _isSyncing = true);
     try {
@@ -179,23 +188,39 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
       if (res.statusCode == 200) {
         final lines = const LineSplitter().convert(res.body);
         if (lines.length > 1) {
+          // ১. বিদ্যমান সমস্ত গাড়ি এবং ডিফল্ট গাড়িগুলো ম্যাপে রাখা (যাতে কোনো ডেটা হারিয়ে না যায়)
           Map<String, VehicleEquipment> vehicleMap = {};
 
+          for (var v in _defaultPreloadedData) {
+            final key = '${v.make}-${v.model}'.toLowerCase().trim();
+            vehicleMap[key] = v;
+          }
+
+          for (var v in _fleetList) {
+            final key = '${v.make}-${v.model}'.toLowerCase().trim();
+            vehicleMap[key] = v;
+          }
+
+          // ২. গুগল শিটের সারিগুলো প্রসেস করা
           for (int i = 1; i < lines.length; i++) {
             final line = lines[i].trim();
             if (line.isEmpty) continue;
-            final cols = line.split(',').map((c) => c.trim()).toList();
-            if (cols.length >= 7) {
-              final make = cols[0];
-              final model = cols[1];
-              final fuel = double.tryParse(cols[2]) ?? 0.0;
-              final fluidName = cols[3];
-              final grade = cols[4];
-              final cap = double.tryParse(cols[5]) ?? 0.0;
-              final interval = int.tryParse(cols[6]) ?? 0;
-              final unit = cols.length > 7 ? cols[7] : 'Km';
 
-              final key = '$make-$model'.toLowerCase();
+            final rawCols = line.split(',');
+            if (rawCols.length >= 7) {
+              final make = _cleanCol(rawCols[0]);
+              final model = _cleanCol(rawCols[1]);
+              final fuel = double.tryParse(_cleanCol(rawCols[2])) ?? 0.0;
+              final fluidName = _cleanCol(rawCols[3]);
+              final grade = _cleanCol(rawCols[4]);
+              final cap = double.tryParse(_cleanCol(rawCols[5])) ?? 0.0;
+              final interval = int.tryParse(_cleanCol(rawCols[6])) ?? 0;
+              final unit = rawCols.length > 7 ? _cleanCol(rawCols[7]) : 'Km';
+
+              if (make.isEmpty || model.isEmpty || fluidName.isEmpty) continue;
+
+              final key = '$make-$model'.toLowerCase().trim();
+
               if (!vehicleMap.containsKey(key)) {
                 vehicleMap[key] = VehicleEquipment(
                   make: make,
@@ -203,36 +228,53 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                   fuelTankCapacity: fuel,
                   fluids: [],
                 );
+              } else {
+                if (fuel > 0) {
+                  vehicleMap[key]!.fuelTankCapacity = fuel;
+                }
               }
 
-              vehicleMap[key]!.fluids.add(
-                    FluidSpec(name: fluidName, grade: grade, capacity: cap, interval: interval, unit: unit),
-                  );
+              final existingFluids = vehicleMap[key]!.fluids;
+              final existingIndex = existingFluids.indexWhere(
+                  (f) => f.name.toLowerCase().trim() == fluidName.toLowerCase().trim());
+
+              final newFluid = FluidSpec(
+                name: fluidName,
+                grade: grade,
+                capacity: cap,
+                interval: interval,
+                unit: unit.isEmpty ? 'Km' : unit,
+              );
+
+              if (existingIndex != -1) {
+                existingFluids[existingIndex] = newFluid;
+              } else {
+                existingFluids.add(newFluid);
+              }
             }
           }
 
-          if (vehicleMap.isNotEmpty) {
-            _fleetList = vehicleMap.values.toList();
-            await _saveDataLocally();
-            _filterSearch(_searchCtrl.text);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Sync successful! ${_fleetList.length} vehicles updated from Sheet.'),
-                  backgroundColor: Colors.green.shade700,
-                ),
-              );
-            }
+          _fleetList = vehicleMap.values.toList();
+          await _saveDataLocally();
+          _filterSearch(_searchCtrl.text);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Sync successful! Total ${_fleetList.length} vehicles available.'),
+                backgroundColor: Colors.green.shade700,
+              ),
+            );
           }
         }
       } else {
-        throw Exception('Server error: ${res.statusCode}');
+        throw Exception('Server error');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sync failed: Make sure Google Sheet is set to "Anyone with the link".'),
+            content: Text('Sync failed: Check internet connection or sheet format.'),
             backgroundColor: Colors.red,
           ),
         );
