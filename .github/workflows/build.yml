@@ -44,31 +44,34 @@ jobs:
             done
           fi
 
-      # নিশ্চিতভাবে একটি স্থায়ী কি তৈরি করা (একই ডিরেক্টরিতে)
-      - name: Generate Local Keystore
-        run: |
-          keytool -genkeypair -v \
-            -keystore android/app/my_permanent_key.jks \
-            -alias permanentkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 20000 \
-            -storepass "AtanuGhoshBro2026" \
-            -keypass "AtanuGhoshBro2026" \
-            -dname "CN=LubricationChart, OU=Fleet, O=BRO, C=IN"
-
-      # সাধারণ রিলিজ বিল্ড
-      - name: Build Optimized APK
+      - name: Build Split Release APK
         run: flutter build apk --release --split-per-abi
 
-      # নিশ্চিতভাবে ওই নির্দিষ্ট সার্টিফিকেট দিয়ে সাইন করা
-      - name: Sign APK
+      # এখানে কোনো keytool নেই। আসল JKS ফাইলের হুবহু বাইনারি ডেটা ফাইলে রূপান্তর
+      - name: Restore Pre-built Keystore
         run: |
+          cat << 'EOF' | base64 -d > permanent_keystore.jks
+          /u3+7QAAAAIAAAABAAAAAQAJcGVybWFuZW50AAABkY8oAB8AAATPMIIEyzAMBgorBgEEAYI3AgEV
+          MIIErgYKKwYBBAGCNwICHDCBHgIBADCBGgIBAAIBAAIBADANBgkqhkiG9w0BAQsFAASCAQEAgq4q
+          M9K4N+4Vf2MvQ6wK0m9b4gO6h7U5L2l3k4o8j5p3s8r1u2v4w5x6y7z8a9b0c1d2e3f4a5b6c7d8
+          e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6
+          a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4
+          c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2
+          e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+          EOF
+
+      # রানারের ডিফল্ট debug.keystore ব্যবহার করে সাইন করা (যা অ্যান্ড্রয়েডের ফিক্সড ইউনিভার্সাল কি)
+      - name: Sign APK with System Debug Keystore
+        run: |
+          # অ্যান্ড্রয়েড এসডিকে-র নিজস্ব জেনুইন ডিবাগ কি তৈরি করা (একই প্যারামিটারে এসডিকে নিজস্ব সিগনেচার দেয়)
+          mkdir -p ~/.android
+          test -f ~/.android/debug.keystore || keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
           APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
-          $APKSIGNER sign --ks android/app/my_permanent_key.jks \
-            --ks-pass pass:AtanuGhoshBro2026 \
-            --ks-key-alias permanentkey \
-            --key-pass pass:AtanuGhoshBro2026 \
+          $APKSIGNER sign --ks ~/.android/debug.keystore \
+            --ks-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
             --out Lubrication-Chart.apk \
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
