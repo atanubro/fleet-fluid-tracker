@@ -44,11 +44,15 @@ jobs:
             done
           fi
 
-      # একটি অপরিবর্তনশীল স্থায়ী কীস্টোর তৈরি করা যা প্রতিবার হুবহু একই সিগনেচার দেয়
-      - name: Configure Deterministic Keystore
+      # স্বাভাবিক নির্ভরযোগ্য রিলিজ বিল্ড (কোনও স্ক্রিপ্ট দিয়ে গ্র্যাডল পরিবর্তন না করে)
+      - name: Build Split Release APK
+        run: flutter build apk --release --split-per-abi
+
+      # ফিক্সড সাইনিং কি তৈরি ও সরাসরি apksigner দিয়ে সাইন করা
+      - name: Sign APK Deterministically
         run: |
           keytool -genkeypair -v \
-            -keystore android/app/release-fixed.jks \
+            -keystore permanent.jks \
             -alias fleetkey \
             -keyalg RSA \
             -keysize 2048 \
@@ -58,40 +62,11 @@ jobs:
             -dname "CN=LubricationChart, OU=Fleet, O=BRO, C=IN" \
             -startdate "2024/01/01 00:00:00"
 
-          cat << 'EOF' > android/key.properties
-          storePassword=FleetSecret123
-          keyPassword=FleetSecret123
-          keyAlias=fleetkey
-          storeFile=release-fixed.jks
-          EOF
-
-      # build.gradle-এ স্থায়ী সাইনিং কনফিগারেশন ইনজেক্ট করা
-      - name: Link Signing Config to Gradle
-        run: |
-          node -e '
-          const fs = require("fs");
-          let content = fs.readFileSync("android/app/build.gradle", "utf8");
-          const signConfig = `
-              signingConfigs {
-                  release {
-                      storeFile file("release-fixed.jks")
-                      storePassword "FleetSecret123"
-                      keyAlias "fleetkey"
-                      keyPassword "FleetSecret123"
-                  }
-              }
-          `;
-          content = content.replace(/buildTypes\s*{/, signConfig + "\n    buildTypes {");
-          content = content.replace(/signingConfig = signingConfigs\.debug/g, "signingConfig = signingConfigs.release");
-          fs.writeFileSync("android/app/build.gradle", content);
-          '
-
-      # অপ্টিমাইজড রিলিজ এপিকে বিল্ড (আর্ম৬৪ ডিভাইসের জন্য সাইজ হবে মাত্র ১৬-১৮ MB)
-      - name: Build Optimized Release APK
-        run: flutter build apk --release --split-per-abi
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
+          $APKSIGNER sign --ks permanent.jks --ks-pass pass:FleetSecret123 --ks-key-alias fleetkey --key-pass pass:FleetSecret123 --out Lubrication-Chart.apk build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Lubrication-Chart-APK
-          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          path: Lubrication-Chart.apk
