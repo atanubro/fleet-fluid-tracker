@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// আপনার লাইভ Google Sheet CSV এক্সপোর্ট লিংক
+// লাইভ Google Sheet CSV এক্সপোর্ট লিংক
 const String googleSheetCsvUrl =
     'https://docs.google.com/spreadsheets/d/109V5BnNPPgrDO6n1y_mngl-VGI7t-GYLBmWSYVXWp3c/gviz/tq?tqx=out:csv';
 
@@ -100,7 +100,7 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
-  // আপনার আপলোড করা দুটি PDF থেকে নিষ্কাশিত সম্পূর্ণ অফলাইন ডেটাসেট
+  // আপনার PDF ফাইলের সমন্বিত অফলাইন ডেটাসেট
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
       make: 'Mahindra',
@@ -649,7 +649,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    final localJson = prefs.getString('saved_fleet_data_v4');
+    final localJson = prefs.getString('saved_fleet_data_v5');
     if (localJson != null && localJson.isNotEmpty) {
       try {
         final List<dynamic> decoded = jsonDecode(localJson);
@@ -668,7 +668,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Future<void> _saveDataLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = jsonEncode(_fleetList.map((e) => e.toMap()).toList());
-    await prefs.setString('saved_fleet_data_v4', jsonStr);
+    await prefs.setString('saved_fleet_data_v5', jsonStr);
   }
 
   String _cleanCol(String text) {
@@ -1074,28 +1074,58 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
     );
   }
 
+  // ওভারফ্লো সমস্যা সম্পূর্ণ দূর করার জন্য নিখুঁত লেআউট
   Widget _buildFluidRow(FluidSpec spec) {
     final color = _getFluidColor(spec.name);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(spec.name, style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13)),
-          const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Grade: ${spec.grade.isEmpty ? 'N/A' : spec.grade}', style: const TextStyle(fontSize: 12)),
-              Text('Cap: ${spec.capacity} L', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Text(
+                  spec.name,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Text(
+                  'Cap: ${spec.capacity} L',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Grade: ${spec.grade.isEmpty ? 'N/A' : spec.grade}',
+                  style: const TextStyle(fontSize: 11, color: Colors.black87),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
                 spec.interval > 0 ? 'Int: ${spec.interval} ${spec.unit}' : 'As Needed',
-                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
               ),
             ],
           ),
