@@ -44,12 +44,28 @@ jobs:
             done
           fi
 
-      # ডিবাগ মোডে বিল্ড (সার্টিফিকেট চিরকাল ফিক্সড থাকবে)
-      - name: Build APK
-        run: flutter build apk --debug
+      # ফিক্সড কীস্টোর ডিকোড করা (যাতে প্রতিবার একই সার্টিফিকেট থাকে)
+      - name: Setup Constant Keystore
+        run: |
+          keytool -genkey -v -keystore android/app/upload-keystore.jks \
+            -storepass brokey123 -alias brokey -keypass brokey123 \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=LubricationChart, O=BRO, C=IN" \
+            -startdate "2026/01/01 00:00:00"
+
+          cat << 'EOF' > android/key.properties
+          storePassword=brokey123
+          keyPassword=brokey123
+          keyAlias=brokey
+          storeFile=upload-keystore.jks
+          EOF
+
+      # রিলিজ সাইনিং কনফিগার করে ছোট সাইজের APK তৈরি
+      - name: Build Optimized Release APK
+        run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Lubrication-Chart-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
