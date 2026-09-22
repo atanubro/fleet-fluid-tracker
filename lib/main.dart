@@ -100,37 +100,538 @@ class FleetHomeScreen extends StatefulWidget {
 }
 
 class _FleetHomeScreenState extends State<FleetHomeScreen> {
+  // আপনার আপলোড করা দুটি PDF থেকে নিষ্কাশিত সম্পূর্ণ অফলাইন ডেটাসেট
   final List<VehicleEquipment> _defaultPreloadedData = [
     VehicleEquipment(
-      make: 'Tata',
-      model: '1212TC',
-      fuelTankCapacity: 160.0,
+      make: 'Mahindra',
+      model: 'Bolero Camper BS-6',
+      fuelTankCapacity: 57.0,
       fluids: [
-        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 18.0, interval: 18000, unit: 'Km'),
-        FluidSpec(name: 'Gear Oil', grade: '80W90', capacity: 7.5, interval: 40000, unit: 'Km'),
-        FluidSpec(name: 'Brake Fluid', grade: 'DOT 4', capacity: 1.0, interval: 40000, unit: 'Km'),
-        FluidSpec(name: 'Coolant', grade: 'Premix 50:50', capacity: 15.0, interval: 60000, unit: 'Km'),
-        FluidSpec(name: 'DEF (AdBlue)', grade: 'AUS 32', capacity: 18.0, interval: 0, unit: 'Km'),
+        FluidSpec(name: 'Engine Oil', grade: 'MAXMILE ULTRA 15W40', capacity: 7.0, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Engine Coolant', grade: 'ULTRA COOL JIS K2234X', capacity: 8.0, interval: 60000, unit: 'Km'),
+        FluidSpec(name: 'Brake & Clutch Fluid', grade: 'DOT 3 / MAXMILE DOT-3', capacity: 1.0, interval: 40000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'TEXAMATIC 1888 / ATF MD3', capacity: 0.8, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'MAXIMILE ELITE 80W-90 GL-5', capacity: 1.75, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Front Axle (4WD)', grade: 'MAXIMILE ELITE 80W-90 GL-5', capacity: 1.25, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Transfer Case', grade: 'MAXIMILE SYNCHRO UV2', capacity: 1.6, interval: 60000, unit: 'Km'),
+        FluidSpec(name: 'Transmission Oil', grade: 'SYNTEC F2 / 80W-90 GL-4', capacity: 2.0, interval: 40000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Mahindra',
+      model: 'Scorpio-N Z4',
+      fuelTankCapacity: 57.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'MAXMILE ULTRA V4', capacity: 6.0, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Engine Coolant', grade: 'ULTRA COOL 2X', capacity: 5.25, interval: 70000, unit: 'Km'),
+        FluidSpec(name: 'Clutch / Brake Fluid', grade: 'MAXMILE DOT 4', capacity: 2.0, interval: 50000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'ATF MD3 / MAXIMILE PSF', capacity: 0.85, interval: 40000, unit: 'Km'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'ISO 22241 / MAXI CLEAN', capacity: 20.0, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'SAE 80W-90 GL-5', capacity: 2.0, interval: 30000, unit: 'Km'),
+        FluidSpec(name: 'Front Axle (4WD)', grade: 'SAE 80W-90 GL-5', capacity: 1.25, interval: 30000, unit: 'Km'),
+        FluidSpec(name: 'Manual Transmission', grade: 'MAXMILE SYNTEC F2', capacity: 2.5, interval: 50000, unit: 'Km'),
+        FluidSpec(name: 'Automatic Transmission', grade: 'ATF NWS 9638', capacity: 9.5, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Transfer Case 4WD', grade: 'DEXRON III', capacity: 1.25, interval: 40000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata',
+      model: 'Yodha 2.2L BS-VI 4x4',
+      fuelTankCapacity: 52.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '5W30', capacity: 7.5, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Engine Coolant', grade: 'SS7721 Tata Ultra (60:40)', capacity: 7.2, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Clutch / Brake Oil', grade: 'DOT 4', capacity: 0.35, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'ATF DEXRON II D', capacity: 1.6, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'SAE 80W90', capacity: 2.2, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Gear Box Oil', grade: 'SAE 80W90', capacity: 1.9, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Front Axle Oil', grade: 'SAE 80W140', capacity: 1.75, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Transfer Case', grade: 'Castrol TQ / Servo Trans-A', capacity: 1.2, interval: 80000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata',
+      model: '1212TC Tipper/WT BS-VI 4x4',
+      fuelTankCapacity: 260.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40 CK4', capacity: 15.0, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Coolant', grade: 'Ethylene Glycol Premix', capacity: 22.0, interval: 40000, unit: 'Km'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'Tata Genuine DEF', capacity: 60.0, interval: 0, unit: 'Km'),
+        FluidSpec(name: 'Gear Box (GB-750)', grade: '80W90 Long Drain', capacity: 7.5, interval: 40000, unit: 'Km'),
+        FluidSpec(name: 'Aux Gear Box', grade: '80W90 Long Drain', capacity: 4.0, interval: 120000, unit: 'Km'),
+        FluidSpec(name: 'Front Axle (FA 104)', grade: '80W140 Long Drain', capacity: 3.5, interval: 120000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle (RA 108RR)', grade: '80W140 Long Drain', capacity: 8.6, interval: 120000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering', grade: 'DEXRON II-D', capacity: 3.0, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Clutch / Brake Fluid', grade: 'DOT 4', capacity: 0.3, interval: 120000, unit: 'Km'),
+        FluidSpec(name: 'Hydraulic Tipping System', grade: 'VG-68', capacity: 28.0, interval: 20000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata',
+      model: 'Signa 2830.K BS-VI HD',
+      fuelTankCapacity: 300.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (6.7L Cummins)', grade: 'CK4 10W30', capacity: 27.0, interval: 40000, unit: 'Km'),
+        FluidSpec(name: 'Coolant', grade: '60% Water + 40% Glycol', capacity: 23.0, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'DEF', grade: 'Tata Genuine DEF', capacity: 60.0, interval: 0, unit: 'Km'),
+        FluidSpec(name: 'Gear Box Oil (GB-1150)', grade: '75W85 Semi-Synthetic', capacity: 11.0, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle (RA 109RR)', grade: '80W90LL', capacity: 14.0, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'Dexron 2D', capacity: 6.0, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Hydraulic Tipping System', grade: 'VG-68', capacity: 19.0, interval: 40000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Ashok Leyland',
+      model: '1920T (4X2) BS-6',
+      fuelTankCapacity: 220.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (H6 Engine)', grade: 'API CK4 10W30', capacity: 18.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Gulf Euro Cool Dura Max 40', capacity: 28.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Clutch / Brake Oil', grade: 'DOT 4 Dura Max', capacity: 0.35, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Gear Box Oil', grade: 'Gulf Gear TX 80W90 GL-4', capacity: 19.2, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'API GL5 SAE 80W90', capacity: 16.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'Gulf ATF DX II', capacity: 4.0, interval: 4000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'ISO 22241 (32.5% Urea)', capacity: 24.0, interval: 0, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Tipping Tank', grade: 'AW 68 / Gulf Tipper MAX-68', capacity: 40.0, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Ashok Leyland',
+      model: 'Bagh 4X4 (1818/1418)',
+      fuelTankCapacity: 220.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W-40', capacity: 10.5, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Coolant', grade: 'MAX 40 Premix', capacity: 22.0, interval: 30000, unit: 'Km'),
+        FluidSpec(name: 'Hyd Clutch Oil', grade: 'DOT 4', capacity: 1.0, interval: 30000, unit: 'Km'),
+        FluidSpec(name: 'Gear Box Oil (ZF S636)', grade: '80W-90', capacity: 7.5, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Front Axle (Meritor)', grade: '85W-140', capacity: 7.5, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Rear Axle Oil', grade: '85W-140', capacity: 16.5, interval: 20000, unit: 'Km'),
+        FluidSpec(name: 'Auxiliary Gear Box', grade: '85W-140', capacity: 4.5, interval: 10000, unit: 'Km'),
+        FluidSpec(name: 'Steering Oil', grade: 'DURA MAX / ATF', capacity: 4.0, interval: 30000, unit: 'Km'),
+        FluidSpec(name: 'Hydraulic Oil (Tipping)', grade: 'VG-68', capacity: 34.0, interval: 30000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Eicher',
+      model: 'Pro 2114XP Water Truck (9KL)',
+      fuelTankCapacity: 190.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'API CK4 10W30', capacity: 14.5, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'SERVO COOL', capacity: 14.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'ECO MAX DEF', capacity: 27.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'SAE 85W140 GL-5', capacity: 8.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'DEXTRON II', capacity: 3.5, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission (ET60S5)', grade: 'SAE 80W90', capacity: 6.25, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake / Clutch Oil', grade: 'DOT 4', capacity: 0.5, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Eicher',
+      model: 'Pro 2119 LC (4X2) 17FT',
+      fuelTankCapacity: 190.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'API CK4 10W30', capacity: 14.5, interval: 80000, unit: 'Km'),
+        FluidSpec(name: 'Engine Coolant', grade: 'SERVO COOL', capacity: 15.0, interval: 320000, unit: 'Km'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'ECO MAX DEF', capacity: 27.0, interval: 160000, unit: 'Km'),
+        FluidSpec(name: 'Differential Oil', grade: 'SAE 85W140 API GL5', capacity: 7.2, interval: 160000, unit: 'Km'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'DEXTRON II D', capacity: 3.0, interval: 160000, unit: 'Km'),
+        FluidSpec(name: 'Transmission Oil (ET60S7)', grade: 'SAE 80W90', capacity: 8.0, interval: 160000, unit: 'Km'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Mahindra',
+      model: 'Blazo X BS6 Dumper 28T',
+      fuelTankCapacity: 260.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (7.2L CR)', grade: 'MAXMILE PLUS 15W40', capacity: 26.8, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'MAXIMILE PLUS COOLANT', capacity: 24.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Clutch / Brake Oil', grade: 'DOT 4', capacity: 0.3, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Steering Box Oil', grade: 'ATF Dexron II D', capacity: 2.5, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axles (RA1+RA2)', grade: 'SAE 85W140', capacity: 34.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Gear Box 6-Speed', grade: 'M-TRANS E-OIL / ZF ECO', capacity: 9.2, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Tipping System', grade: 'D-68', capacity: 55.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'ISO 22241', capacity: 50.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BharatBenz',
+      model: 'Trailer Flatbed (DE 212 BS4)',
+      fuelTankCapacity: 260.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (OM906 LA)', grade: 'SAE 15W40', capacity: 28.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Glysantin G48 Premix', capacity: 30.0, interval: 4000, unit: 'Hrs'),
+        FluidSpec(name: 'Power Steering Oil', grade: 'ATF MX', capacity: 7.2, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission (G131)', grade: 'SAE 80W', capacity: 13.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle 1 (IRT 390)', grade: 'SAE 80W90', capacity: 14.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle 2 (IR 390)', grade: 'SAE 80W90', capacity: 11.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'AdBlue AUS 32', capacity: 51.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Maruti',
+      model: 'Gypsy King',
+      fuelTankCapacity: 40.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 4.2, interval: 12000, unit: 'Km'),
+        FluidSpec(name: 'Transmission Oil', grade: '80W90', capacity: 1.3, interval: 24000, unit: 'Km'),
+        FluidSpec(name: 'Transfer Case', grade: '80W90', capacity: 0.8, interval: 24000, unit: 'Km'),
+        FluidSpec(name: 'Front Differential', grade: '80W90', capacity: 2.0, interval: 24000, unit: 'Km'),
+        FluidSpec(name: 'Rear Differential', grade: '80W90', capacity: 1.5, interval: 24000, unit: 'Km'),
+        FluidSpec(name: 'Coolant', grade: 'Servo Cool', capacity: 4.8, interval: 24000, unit: 'Km'),
       ],
     ),
     VehicleEquipment(
       make: 'JCB',
-      model: '205 Excavator',
+      model: '3DX Backhoe Loader',
+      fuelTankCapacity: 128.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40 CI4+', capacity: 15.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'AFC + Water Premix', capacity: 20.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'HVI VG 46 / HLP 46', capacity: 92.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'EP 10W / 80W90', capacity: 20.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle Oil', grade: '85W140 / API GL-5', capacity: 21.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Front Axle (4WD)', grade: 'HP 90 / GL-4', capacity: 18.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake System', grade: 'JCB HVU 15 / VG 46', capacity: 1.4, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'JCB',
+      model: 'JS 205 / JS 200 Track Excavator',
+      fuelTankCapacity: 343.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'MAX 15W40 CI4+', capacity: 17.5, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Castrol Antifreeze HP', capacity: 28.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'HLP-46 / TH-46', capacity: 250.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Track Gear Box (Each)', grade: 'JCB HD90 / 80W90', capacity: 4.8, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Slew Gear Box', grade: 'JCB HD90 / 80W90', capacity: 5.0, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata Hitachi',
+      model: 'EX 200 LC Excavator',
       fuelTankCapacity: 310.0,
       fluids: [
-        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 17.5, interval: 500, unit: 'Hrs'),
-        FluidSpec(name: 'Hydraulic Oil', grade: 'Hydraulic 68', capacity: 125.0, interval: 2000, unit: 'Hrs'),
-        FluidSpec(name: 'Coolant', grade: 'Heavy Duty LLC', capacity: 20.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Oil', grade: 'SPCF4 15W-40', capacity: 16.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Super Cool', capacity: 35.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Tank', grade: 'Super 46 / TH 46', capacity: 129.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'Super 46 / TH 46', capacity: 220.0, interval: 2500, unit: 'Hrs'),
+        FluidSpec(name: 'Swing Reduction Device', grade: 'Gear Oil 80W90', capacity: 6.7, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Travel Reduction (x2)', grade: 'Gear Oil 80W90', capacity: 6.8, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata Hitachi',
+      model: 'EX 70 Excavator',
+      fuelTankCapacity: 120.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 10.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Servo Cool', capacity: 15.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'Servo Hydrex TH 46', capacity: 90.0, interval: 2500, unit: 'Hrs'),
+        FluidSpec(name: 'Swing Reduction', grade: 'SGS 80W 90', capacity: 1.8, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Travel Reduction (x2)', grade: 'SGS 80W 90', capacity: 3.0, interval: 1000, unit: 'Hrs'),
       ],
     ),
     VehicleEquipment(
       make: 'BEML',
-      model: 'BD-50 Dozer',
-      fuelTankCapacity: 320.0,
+      model: 'BD-50 Crawler Dozer',
+      fuelTankCapacity: 240.0,
       fluids: [
-        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 22.0, interval: 250, unit: 'Hrs'),
-        FluidSpec(name: 'Hydraulic Oil', grade: 'Hydraulic 68', capacity: 95.0, interval: 1000, unit: 'Hrs'),
-        FluidSpec(name: 'Transmission Oil', grade: 'SAE 30', capacity: 48.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Oil (BS 6D 105)', grade: '15W-40', capacity: 24.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Servo Cool', capacity: 35.0, interval: 1250, unit: 'Hrs'),
+        FluidSpec(name: 'Main Clutch Case', grade: '15W-40 / SU 30W', capacity: 15.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'SAE-10W / EH-10CD', capacity: 149.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Case', grade: 'SAE 30 / ET 30CD', capacity: 34.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive Case (Each)', grade: '15W-40 / SU 30W', capacity: 12.0, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BD-80 Heavy Dozer',
+      fuelTankCapacity: 420.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (BS 6D 125)', grade: '15W-40', capacity: 34.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'AFC + Water Premix', capacity: 65.0, interval: 1250, unit: 'Hrs'),
+        FluidSpec(name: 'Main Clutch Case', grade: 'SU 30W', capacity: 25.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission & Steering', grade: '15W40 CF4 / SU 30W', capacity: 75.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Tank', grade: 'SAE 10W / EH10CD', capacity: 105.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive Case (Each)', grade: 'SU 30W', capacity: 36.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Recoil Spring Case (Each)', grade: 'SU 30W', capacity: 10.0, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BE-220 / BE-220G Excavator',
+      fuelTankCapacity: 280.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'CF4 15W40', capacity: 25.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Servo Cool', capacity: 35.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Swing Machinery Case', grade: 'SAE 30 CD', capacity: 10.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive Case (Each)', grade: 'SAE 30 CD', capacity: 3.7, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'SAE 30 CD / Hyd 68', capacity: 250.0, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BE-300 Excavator',
+      fuelTankCapacity: 510.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'CF4 15W40', capacity: 28.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Servo Cool', capacity: 52.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Swing Machinery', grade: 'SAE 30 CD', capacity: 11.5, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive Case', grade: 'SAE 30 CD', capacity: 10.5, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'SAE 30 CD', capacity: 250.0, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BG 605 Motor Grader',
+      fuelTankCapacity: 250.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40 / KB-30', capacity: 30.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'Super Cool', capacity: 55.0, interval: 1250, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'SU-30 / KB 30', capacity: 36.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'SAE 10W / SU-10', capacity: 27.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive (Each Side)', grade: 'SAE 90 / KB 30', capacity: 24.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Tandem Case (Each)', grade: 'SAE 10W / SU 10W', capacity: 36.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Blade Circle Gear Case', grade: 'SAE 10W', capacity: 4.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake Fluid', grade: 'SAE J-1703', capacity: 0.8, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'ACE',
+      model: 'AG-176 Motor Grader BS-V',
+      fuelTankCapacity: 290.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (AL H6)', grade: 'CK4 10W30 / 15W40', capacity: 16.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'LEYCOOL 40 AFC', capacity: 27.5, interval: 5000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'C4 SAE-30 / SAE-10', capacity: 28.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'HLP-46', capacity: 110.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Gear Oil', grade: 'EP 90 GL5 80W90', capacity: 20.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Swing Reduction Oil', grade: '80W90', capacity: 3.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF (AdBlue)', grade: 'AUS 32', capacity: 24.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'ACE',
+      model: 'Backhoe Loader (BS-VI)',
+      fuelTankCapacity: 160.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (M&M 3.53L)', grade: 'CF4 15W40', capacity: 11.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'Antifreeze Premix', capacity: 15.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission & T/C', grade: 'SAE 30', capacity: 17.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'AWH 46', capacity: 135.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle Oil', grade: 'EP 90', capacity: 17.5, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Front Axle Oil (4WD)', grade: 'EP 90', capacity: 9.1, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake Fluid', grade: 'AWH 46', capacity: 0.5, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'BEML',
+      model: 'BL 200-1 Wheel Loader',
+      fuelTankCapacity: 170.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'CK4 10W-30 / 15W-40', capacity: 18.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Ley Power Coolant 5000', capacity: 27.0, interval: 5000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'SAE-10W EH-10CD', capacity: 110.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'C4 SAE-10W', capacity: 32.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Axle Oil (Front & Rear)', grade: 'SAE 30 / 80W90', capacity: 31.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake Oil', grade: 'SAE-5W/10W', capacity: 2.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'AdBlue (DEF)', grade: 'AUS 32', capacity: 24.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'L&T',
+      model: '9020 Wheel Loader',
+      fuelTankCapacity: 192.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (ALH6)', grade: 'CK4 10W-30 / 5W-30', capacity: 14.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'GULF-40 / Ley Power Cool', capacity: 25.0, interval: 5000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'HLP 68 / ISO VG 68', capacity: 90.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Transmission Oil', grade: 'SAE-30', capacity: 38.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Axle Oil (Each)', grade: 'MIL-L2105 API GL5 80W90', capacity: 28.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Fluid', grade: 'AUS 32 / ISO 22241', capacity: 24.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'CASE',
+      model: '952 NX BS-5 Vibratory Compactor',
+      fuelTankCapacity: 170.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '10W40 CK4', capacity: 8.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'OAT-EG2 Premix', capacity: 14.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'HM-68 / HV-68', capacity: 118.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Roller Drum Oil', grade: 'EP 80W-90 GL-5', capacity: 9.2, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Gear Box Oil (Front)', grade: 'EP 80W-90 GL-5', capacity: 1.1, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Gear Box Oil (Rear)', grade: 'EP 80W-90 GL-5', capacity: 1.1, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata Hitachi',
+      model: 'VM-31 Soil Compactor (10-12T)',
+      fuelTankCapacity: 150.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (497 TC)', grade: '15W40 CK4', capacity: 8.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'AFC + Water Premix', capacity: 15.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'TH-46', capacity: 150.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Drum / Roller Oil', grade: '15W40', capacity: 13.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Reducer Drum Oil', grade: 'SAE 90EP', capacity: 2.6, interval: 100, unit: 'Hrs'),
+        FluidSpec(name: 'Drive Axle Planetary Set', grade: 'SAE 90EP', capacity: 15.0, interval: 2000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Escorts',
+      model: 'TVRR HD-85 Road Roller',
+      fuelTankCapacity: 155.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (HA-494)', grade: '15W40', capacity: 11.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'HLP 68 / Elfona 68', capacity: 90.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Drum & Differential Gear', grade: 'SAE 85W90', capacity: 20.0, interval: 1000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Gujarat Apollo',
+      model: 'AP 550 DX Paver Sensor',
+      fuelTankCapacity: 160.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 15.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Engine Coolant', grade: 'Heavy Duty Coolant', capacity: 10.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'Servo System 100', capacity: 190.0, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Brake Fluid', grade: 'Brake Oil', capacity: 0.8, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Differential Gear Box', grade: '85W140 / HP 140', capacity: 15.0, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Planetary Gear Box (Each)', grade: '85W140', capacity: 1.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Pump Distributer Gear', grade: 'Gear Oil 90', capacity: 5.0, interval: 750, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Technomatic',
+      model: 'F-90 Snow Cutter/Blower',
+      fuelTankCapacity: 500.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (Volvo Penta)', grade: 'LDF 4 / 5W30 CK-4', capacity: 48.0, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Cooling Liquid', grade: 'Volvo Penta Coolant VCS', capacity: 100.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Axles & Planetary Gear', grade: 'TUTELA W90/M-DA 80W90', capacity: 19.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Two Speed Back Gear', grade: 'TUTELA W90/M-DA 80W90', capacity: 20.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: '1st Stage Gearings', grade: 'TUTELA W90/M-DA 80W90', capacity: 10.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: '2nd Stage Gearings', grade: 'TUTELA W90/M-DA 80W90', capacity: 2.5, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic & Hydrostatic', grade: 'TUTELA CAR GI/E (ATF D-III)', capacity: 70.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Brake System', grade: 'DOT 3', capacity: 2.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'AdBlue / ISO 22241', capacity: 68.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Ajax Fiori',
+      model: 'Argo 4500 Transit Mixer',
+      fuelTankCapacity: 110.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (M&M CRDI)', grade: 'SAJ 15W30', capacity: 13.5, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Cooling System', grade: 'Coolant Premix', capacity: 21.7, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Front Axle (Dana)', grade: 'AXLE GEAR OIL - GPO', capacity: 6.4, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Rear Axle (Dana)', grade: 'AXLE GEAR OIL - GPO', capacity: 6.4, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Drum Reduction Gear (Comer)', grade: 'AJAX GEAR OIL - XTR', capacity: 3.0, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Drum Swivel Gear Box', grade: 'Gear Oil 90', capacity: 0.6, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Brake System', grade: 'AJAX BRAKE OIL - HP', capacity: 1.0, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil', grade: 'AJAX HYD ULTRA 68', capacity: 110.0, interval: 1500, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'AdBlue ISO 22241', capacity: 18.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Sandvik',
+      model: 'DC 122R Rock Drill',
+      fuelTankCapacity: 75.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (CAT 2.2)', grade: 'OE 15W-40', capacity: 8.2, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'CAT ELC Glycol', capacity: 10.0, interval: 3000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'OH-68 / HFE 46', capacity: 45.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Compressor Oil', grade: 'OC 10-H 46 / SAE SW-20', capacity: 6.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive Case (x4)', grade: 'CLP 150 / 75W90', capacity: 2.8, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Winch Oil', grade: 'SAE 80W90', capacity: 0.7, interval: 3000, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Sandvik',
+      model: 'Dino DC 400R Rock Drill',
+      fuelTankCapacity: 210.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40 / 10W40', capacity: 16.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Valvo VCS Premix', capacity: 35.0, interval: 2000, unit: 'Hrs'),
+        FluidSpec(name: 'Compressor Oil', grade: 'ISO 6743-3A DAH 46', capacity: 17.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic Oil Tank', grade: 'Shell Tellus S2 V68', capacity: 237.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Transfer Gear', grade: 'Shell Omala S4 GX 150', capacity: 3.3, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Final Drive', grade: '80W90', capacity: 2.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'AUS 32 / ISO 22241', capacity: 20.0, interval: 0, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Atlas Copco',
+      model: 'ROC 203 Crawler Drill',
+      fuelTankCapacity: 120.0,
+      fluids: [
+        FluidSpec(name: 'Lubricating Oil Tank', grade: 'Servonium-100', capacity: 10.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Hydraulic System', grade: 'HLP-68', capacity: 85.0, interval: 1000, unit: 'Hrs'),
+        FluidSpec(name: 'Power Drive / Feed Gear', grade: 'Servonium-100', capacity: 1.0, interval: 500, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Atlas Copco',
+      model: 'XA 175 / XAM 140 / XAS 76 Compressor',
+      fuelTankCapacity: 120.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'SAE 15W-40', capacity: 8.5, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Compressor Oil', grade: 'HLP-68 / Paroil M', capacity: 32.0, interval: 750, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'CP Chicago Pneumatic',
+      model: 'CPS 260 CFM Compressor',
+      fuelTankCapacity: 140.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'SAE 15W-40', capacity: 9.5, interval: 250, unit: 'Hrs'),
+        FluidSpec(name: 'Compressor Oil', grade: 'HLP-68', capacity: 32.0, interval: 750, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Kirloskar',
+      model: '250 KVA Genset (KG4-250WS1)',
+      fuelTankCapacity: 600.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (6SL90ETA)', grade: '15W40 CF4', capacity: 27.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Kirloskar Coolant Premix', capacity: 36.0, interval: 2500, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'DEF AUS 32', capacity: 45.0, interval: 500, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Kirloskar',
+      model: '200 KVA Genset (6K1080ETA)',
+      fuelTankCapacity: 400.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40', capacity: 25.0, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Heavy Duty Coolant', capacity: 28.0, interval: 2500, unit: 'Hrs'),
+        FluidSpec(name: 'DEF Tank', grade: 'DEF AUS 32', capacity: 45.0, interval: 500, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Kirloskar',
+      model: '30 KVA Genset (HA 494)',
+      fuelTankCapacity: 70.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: 'SAE 15W40', capacity: 10.5, interval: 250, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Tata',
+      model: '4SP CPCB IV+ 30KVA Genset',
+      fuelTankCapacity: 72.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil (497 SPTC)', grade: '15W40 / 5W30 (Cold)', capacity: 11.5, interval: 500, unit: 'Hrs'),
+        FluidSpec(name: 'Coolant', grade: 'Ethylene Glycol 50:50', capacity: 14.0, interval: 2500, unit: 'Hrs'),
+      ],
+    ),
+    VehicleEquipment(
+      make: 'Hero',
+      model: 'Super Splendor (125cc)',
+      fuelTankCapacity: 13.0,
+      fluids: [
+        FluidSpec(name: 'Engine Oil', grade: '15W40 4T', capacity: 0.95, interval: 3000, unit: 'Km'),
       ],
     ),
   ];
@@ -148,7 +649,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    final localJson = prefs.getString('saved_fleet_data_v3');
+    final localJson = prefs.getString('saved_fleet_data_v4');
     if (localJson != null && localJson.isNotEmpty) {
       try {
         final List<dynamic> decoded = jsonDecode(localJson);
@@ -167,7 +668,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Future<void> _saveDataLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = jsonEncode(_fleetList.map((e) => e.toMap()).toList());
-    await prefs.setString('saved_fleet_data_v3', jsonStr);
+    await prefs.setString('saved_fleet_data_v4', jsonStr);
   }
 
   String _cleanCol(String text) {
@@ -256,7 +757,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Sync successful! Total ${_fleetList.length} vehicles available.'),
+                content: Text('Sync successful! Total ${_fleetList.length} items loaded.'),
                 backgroundColor: Colors.green.shade700,
               ),
             );
@@ -269,7 +770,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sync failed: Check internet connection or sheet columns.'),
+            content: Text('Sync failed: Check network connection.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -294,15 +795,14 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
   Color _getFluidColor(String name) {
     final lower = name.toLowerCase();
     if (lower.contains('engine')) return Colors.blue.shade800;
-    if (lower.contains('gear')) return Colors.deepOrange.shade800;
+    if (lower.contains('gear') || lower.contains('transmission') || lower.contains('axle')) return Colors.deepOrange.shade800;
     if (lower.contains('hydraulic')) return Colors.teal.shade800;
-    if (lower.contains('coolant')) return Colors.green.shade800;
-    if (lower.contains('brake')) return Colors.purple.shade800;
+    if (lower.contains('cool')) return Colors.green.shade800;
+    if (lower.contains('brake') || lower.contains('clutch')) return Colors.purple.shade800;
     if (lower.contains('def') || lower.contains('adblue')) return Colors.cyan.shade800;
     return Colors.indigo.shade800;
   }
 
-  // নতুন Equipment যোগ করার ডায়ালগ (+ বোতামের জন্য)
   void _showAddVehicleDialog() {
     final makeCtrl = TextEditingController();
     final modelCtrl = TextEditingController();
@@ -336,7 +836,7 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
                       Expanded(
                         child: TextField(
                           controller: modelCtrl,
-                          decoration: const InputDecoration(labelText: 'Model (e.g. 3DX)', border: OutlineInputBorder(), isDense: true),
+                          decoration: const InputDecoration(labelText: 'Model (e.g. D6R, 3DX)', border: OutlineInputBorder(), isDense: true),
                         ),
                       ),
                     ],
@@ -702,7 +1202,6 @@ class _FleetHomeScreenState extends State<FleetHomeScreen> {
           ],
         ),
       ),
-      // নিচে ডানপাশের '+' বোতাম
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddVehicleDialog,
         tooltip: 'Add Equipment',
